@@ -15,7 +15,10 @@ void Renderer::Render()
                 glm::vec2 textCoord = { (float)x / (float)m_Application->GetWidth(), (float)y / (float)m_Application->GetHeight() };
                 textCoord = textCoord * 2.0f - 1.0f;
 
-                pixels[x + y * m_Application->GetWidth()] = Vec4ToHex(RenderPixel(textCoord));
+                glm::vec4 color = RenderPixel(textCoord);
+                color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+
+                pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
             }
         } 
 
@@ -35,7 +38,7 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
     coord.x *= aspectRation;
 
     glm::vec3 rayDirection = glm::vec3(coord.x, coord.y, -1.0f);
-    glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 2.0f);
+    glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 1.0f);
 
     float radius = 0.5f;
 
@@ -45,20 +48,22 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
 
     float discriminant = glm::pow(b, 2.0f) - 4.0f * a * c;
 
-    if(discriminant >= 0.0f)
-        return {1.0f, 0.0f, 1.0f, 1.0f};
+    if(discriminant < 0.0f)
+        return {0.0f, 0.0f, 0.0f, 1.0f};
 
-    return {0.0f, 0.0f, 0.0f, 1.0f};
-}
+    float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a);
+    float t1 = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 
-uint32_t Renderer::Vec4ToHex(glm::vec4 vec)
-{
-    uint32_t r = (uint32_t)(vec.r * 255.0f);
-    uint32_t g = (uint32_t)(vec.g * 255.0f);
-    uint32_t b = (uint32_t)(vec.b * 255.0f);
-    uint32_t a = (uint32_t)(vec.a * 255.0f);
+    glm::vec3 hitPoint = rayOrigin + rayDirection * t1;
 
-    return (a << 24) | (b << 16) | (g << 8) | r;
+    glm::vec3 normal = glm::normalize(hitPoint);
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+
+    float d = glm::max(glm::dot(normal, -lightDirection), 0.0f);
+
+    glm::vec3 color = {1.0f, 0.0f, 1.0f};
+    color *= d;
+    return {color, 1.0f};
 }
 
 bool Renderer::HasResized()
@@ -85,4 +90,14 @@ void Renderer::RenderUI()
 
     // ImGui::Begin("Settings");
     // ImGui::End();
+}
+
+uint32_t utils::Vec4ToHex(glm::vec4& vec)
+{
+    uint8_t r = (uint32_t)(vec.r * 255.0f);
+    uint8_t g = (uint32_t)(vec.g * 255.0f);
+    uint8_t b = (uint32_t)(vec.b * 255.0f);
+    uint8_t a = (uint32_t)(vec.a * 255.0f);
+
+    return (a << 24) | (b << 16) | (g << 8) | r;
 }

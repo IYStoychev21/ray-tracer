@@ -7,6 +7,11 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 
+namespace utils
+{
+    uint32_t Vec4ToHex(glm::vec4& vec);
+}
+
 class Renderer
 {
 public:
@@ -19,7 +24,6 @@ public:
 private:
     bool HasResized();
     glm::vec4 RenderPixel(glm::vec2 coord);
-    uint32_t Vec4ToHex(glm::vec4 vec);
 
 private:
     std::shared_ptr<Magenta::Image> m_Image;
