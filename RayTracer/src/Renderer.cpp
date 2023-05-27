@@ -61,14 +61,14 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
 
     float d = glm::max(glm::dot(normal, -lightDirection), 0.0f);
 
-    glm::vec3 color = {1.0f, 0.0f, 1.0f};
+    glm::vec3 color = {m_ImGuiColor.x, m_ImGuiColor.y, m_ImGuiColor.z};
     color *= d;
     return {color, 1.0f};
 }
 
 bool Renderer::HasResized()
 {
-    if(m_PrevSize.x != m_Application->GetWidth() || m_PrevSize.y != m_Application->GetHeight())
+    if(m_PrevSize.x != m_Application->GetWidth() || m_PrevSize.y != m_Application->GetHeight() || m_ShouldReRender)
     {
         m_PrevSize = glm::vec2(m_Application->GetWidth(), m_Application->GetHeight());
         return true;
@@ -88,8 +88,22 @@ void Renderer::RenderUI()
 
     ImGui::End();
 
-    // ImGui::Begin("Settings");
-    // ImGui::End();
+    style.WindowPadding = ImVec2(10, 10);
+    ImVec4 prevColor = m_ImGuiColor;
+
+    ImGui::Begin("Settings");
+    ImGui::ColorPicker3("Color", (float*)&m_ImGuiColor);
+
+    ImGui::Spacing();
+
+    if(ImGui::Button("Re-render", ImVec2(200, 25)))
+        m_ShouldReRender = true;
+    else if(prevColor.x != m_ImGuiColor.x || prevColor.y != m_ImGuiColor.y || prevColor.z != m_ImGuiColor.z)
+        m_ShouldReRender = true;
+    else
+        m_ShouldReRender = false;
+
+    ImGui::End();
 }
 
 uint32_t utils::Vec4ToHex(glm::vec4& vec)

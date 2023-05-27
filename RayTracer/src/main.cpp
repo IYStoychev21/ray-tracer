@@ -23,12 +23,16 @@ public:
     void OnAttach() override 
     {
         m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application));
+        m_InputManager = m_Application->GetInputManager();
     }
 
     void OnDetach() override {}
 
     void OnUpdate() override 
     {
+        if (m_InputManager->IsKeyDown(Magenta::KeyCode::Escape))
+            m_Application->CloseWindow();
+
         m_Renderer->Render(); 
     }
 
@@ -38,6 +42,7 @@ public:
     }
 private:
     std::shared_ptr<Renderer> m_Renderer;
+    std::shared_ptr<Magenta::InputManager> m_InputManager;
 };
 
 Magenta::Application* Magenta::CreateApplication()

@@ -157,7 +157,6 @@ namespace Magenta
 
 	void Shader::SetUniform(ShaderDataType type, std::string uniformName, const glm::mat4& value)
 	{
-
 		int32_t location = glGetUniformLocation(m_RendererID, uniformName.c_str());
 		glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
 	}

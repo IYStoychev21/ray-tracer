@@ -30,4 +30,8 @@ private:
     glm::vec2 m_PrevSize = glm::vec2(0.0f);
     Magenta::Application* m_Application;
     std::vector<uint32_t> pixels;
+
+    ImVec4 m_ImGuiColor = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
+
+    bool m_ShouldReRender = false;
 };
