@@ -18,7 +18,7 @@ public:
 
 private:
     bool HasResized();
-    uint32_t RenderPixel(glm::vec2 pixelPos);
+    uint32_t RenderPixel(glm::vec2 coord);
 
 private:
     std::shared_ptr<Magenta::Image> m_Image;
