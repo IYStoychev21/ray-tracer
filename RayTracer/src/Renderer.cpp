@@ -34,7 +34,7 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
     // r = sphere radius
     // t = distance along ray
 
-    float aspectRation = (float)m_Application->GetWidth() / (float)m_Application->GetHeight();
+    float aspectRation = m_Resolution.x / m_Resolution.y;
     coord.x *= aspectRation;
 
     glm::vec3 rayDirection = glm::vec3(coord.x, coord.y, -1.0f);
@@ -68,9 +68,9 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
 
 bool Renderer::HasResized()
 {
-    if(m_PrevSize.x != m_Application->GetWidth() || m_PrevSize.y != m_Application->GetHeight() || m_ShouldReRender)
+    if(m_PrevSize.x != m_Resolution.x || m_PrevSize.y != m_Resolution.y || m_ShouldReRender)
     {
-        m_PrevSize = glm::vec2(m_Application->GetWidth(), m_Application->GetHeight());
+        m_PrevSize = glm::vec2(m_Resolution.x, m_Resolution.y);
         return true;
     }
 
@@ -83,6 +83,8 @@ void Renderer::RenderUI()
     style.WindowPadding = ImVec2(0, 0);
 
     ImGui::Begin("Viewport");
+
+    m_Resolution = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
 
     ImGui::Image((void*)m_Image->GetTextureID(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 
@@ -102,6 +104,7 @@ void Renderer::RenderUI()
         m_ShouldReRender = true;
     else
         m_ShouldReRender = false;
+
 
     ImGui::End();
 }

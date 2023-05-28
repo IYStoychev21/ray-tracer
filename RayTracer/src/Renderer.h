@@ -15,7 +15,11 @@ namespace utils
 class Renderer
 {
 public:
-    Renderer(Magenta::Application* app) : m_Application(app) { }
+    Renderer(Magenta::Application* app) : m_Application(app) 
+    { 
+        m_Resolution = glm::vec2(m_Application->GetWidth(), m_Application->GetHeight());
+    }
+
     ~Renderer() = default;
 
     void Render();
@@ -30,6 +34,8 @@ private:
     glm::vec2 m_PrevSize = glm::vec2(0.0f);
     Magenta::Application* m_Application;
     std::vector<uint32_t> pixels;
+
+    glm::vec2 m_Resolution;
 
     ImVec4 m_ImGuiColor = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
 

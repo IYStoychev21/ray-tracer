@@ -49,7 +49,7 @@ Magenta::Application* Magenta::CreateApplication()
 {
     RayTracer* app = new RayTracer();
 
-    app->InitWindow(800, 800, "Ray Tracer");
+    app->InitWindow(1280, 720, "Ray Tracer");
     app->PushMagentaLayer(std::shared_ptr<MainLayer>(new MainLayer(app)));
 
     return app;
