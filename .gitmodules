@@ -4,3 +4,6 @@
 [submodule "vendor/imgui"]
 	path = vendor/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "Magenta"]
+	path = Magenta
+	url = https://github.com/IYStoychev21/Magenta

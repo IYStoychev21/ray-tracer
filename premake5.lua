@@ -27,7 +27,7 @@ project "RayTracer"
       "%{prj.name}/src",
       "vendor/GLFW/include",
       "vendor/glad/include",
-      "Magenta/src",
+      "Magenta/Magenta/src",
       "vendor/GLEW/include",
       "vendor/glm",
       "vendor/stb_image",
@@ -69,7 +69,7 @@ project "RayTracer"
     optimize "On"
 
 project "Magenta"
-    location "Magenta"
+    location "Magenta/Magenta"
     kind "StaticLib"
     language "C++"
     
@@ -78,15 +78,15 @@ project "Magenta"
     
     files
     {
-        "%{prj.name}/src/**.cpp",
-        "%{prj.name}/src/**.h",
+        "%{prj.name}/Magenta/src/**.cpp",
+        "%{prj.name}/Magenta/src/**.h",
         "vendor/stb_image/**.cpp",
         "vendor/stb_image/**.h"
     }
     
     includedirs
     {
-      "%{prj.name}/src",
+      "%{prj.name}/Magenta/src",
       "vendor/GLFW/include",
       "vendor/glad/include",
       "vendor/GLEW/include",
