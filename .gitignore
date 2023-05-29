@@ -2,5 +2,10 @@
 /bin-int
 Makefile
 .vscode
-imgui.ini
 build.py
+
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vcxproj.*.user

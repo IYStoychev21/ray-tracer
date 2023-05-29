@@ -3,30 +3,40 @@
 
 void Renderer::Render()
 {
-    if(HasResized())
+    Ray ray;
+    ray.Origin = m_Camera->GetPosition();
+
+    if(m_PrevPos.x != ray.Origin.x || m_PrevPos.y != ray.Origin.y || m_PrevPos.z != ray.Origin.z)
     {
-        pixels.clear();
-        pixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
-
-        for(uint32_t y = 0; y < m_Application->GetHeight(); y++)
-        {
-            for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
-            {
-                glm::vec2 textCoord = { (float)x / (float)m_Application->GetWidth(), (float)y / (float)m_Application->GetHeight() };
-                textCoord = textCoord * 2.0f - 1.0f;
-
-                glm::vec4 color = RenderPixel(textCoord);
-                color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-
-                pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
-            }
-        } 
-
-        m_Image = std::shared_ptr<Magenta::Image>(new Magenta::Image(pixels.data(), glm::vec2(m_Application->GetWidth(), m_Application->GetHeight()), GL_RGBA));
+        m_ShouldReRender = true;
+        m_PrevPos = ray.Origin;
     }
+
+    if(!HasResized())
+        return;
+
+    pixels.clear();
+    pixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
+
+
+    for(uint32_t y = 0; y < m_Application->GetHeight(); y++)
+    {
+        for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
+        {
+            glm::vec2 textCoord = { (float)x / (float)m_Application->GetWidth(), (float)y / (float)m_Application->GetHeight() };
+            textCoord = textCoord * 2.0f - 1.0f;
+
+            glm::vec4 color = RenderPixel(textCoord, ray);
+            color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
+
+            pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
+        }
+    } 
+
+    m_Image = std::shared_ptr<Magenta::Image>(new Magenta::Image(pixels.data(), glm::vec2(m_Application->GetWidth(), m_Application->GetHeight()), GL_RGBA));
 }
 
-glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
+glm::vec4 Renderer::RenderPixel(glm::vec2 coord, Ray& ray)
 {
     // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
     // a = ray origin
@@ -38,13 +48,12 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
     coord.x *= aspectRation;
 
     glm::vec3 rayDirection = glm::vec3(coord.x, coord.y, -1.0f);
-    glm::vec3 rayOrigin = glm::vec3(0.0f, 0.0f, 1.0f);
 
     float radius = 0.5f;
 
     float a = glm::dot(rayDirection, rayDirection);
-    float b = 2.0f * glm::dot(rayDirection, rayOrigin);
-    float c = glm::dot(rayOrigin, rayOrigin) - glm::pow(radius, 2.0f);
+    float b = 2.0f * glm::dot(rayDirection, ray.Origin);
+    float c = glm::dot(ray.Origin, ray.Origin) - glm::pow(radius, 2.0f);
 
     float discriminant = glm::pow(b, 2.0f) - 4.0f * a * c;
 
@@ -54,12 +63,12 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord)
     float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a);
     float t1 = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 
-    glm::vec3 hitPoint = rayOrigin + rayDirection * t1;
+    glm::vec3 hitPoint = ray.Origin + rayDirection * t1;
 
     glm::vec3 normal = glm::normalize(hitPoint);
     glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
 
-    float d = glm::max(glm::dot(normal, -lightDirection), 0.0f);
+    float d = glm::dot(normal, -lightDirection);
 
     glm::vec3 color = {m_ImGuiColor.x, m_ImGuiColor.y, m_ImGuiColor.z};
     color *= d;
@@ -71,6 +80,7 @@ bool Renderer::HasResized()
     if(m_PrevSize.x != m_Resolution.x || m_PrevSize.y != m_Resolution.y || m_ShouldReRender)
     {
         m_PrevSize = glm::vec2(m_Resolution.x, m_Resolution.y);
+        m_ShouldReRender = false;
         return true;
     }
 
@@ -94,8 +104,20 @@ void Renderer::RenderUI()
     ImVec4 prevColor = m_ImGuiColor;
 
     ImGui::Begin("Settings");
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Sphere Color");
     ImGui::ColorPicker3("Color", (float*)&m_ImGuiColor);
 
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Camera Speed");
+    ImGui::SliderFloat("Speed", &m_Camera->speed, 0.0f, 10.0f);
+
+    ImGui::Separator();
     ImGui::Spacing();
 
     if(ImGui::Button("Re-render", ImVec2(200, 25)))
