@@ -17,7 +17,7 @@ Camera::~Camera()
 
 }
 
-void Camera::CameraUpdate()
+void Camera::CameraUpdate(float deltaTime)
 {
     glm::vec2 mousePos = m_Application->GetInputManager()->GetMousePosition();
     glm::vec2 mouseDelta = mousePos - m_LastMousePositon;
@@ -31,37 +31,37 @@ void Camera::CameraUpdate()
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::W))
     {
-        m_Position += m_Direction * speed;
+        m_Position += m_Direction * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::S))
     {
-        m_Position -= m_Direction * speed;
+        m_Position -= m_Direction * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::A))
     {
-        m_Position -= rightDirection * speed;
+        m_Position -= rightDirection * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::D))
     {
-        m_Position += rightDirection * speed;
+        m_Position += rightDirection * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::Q))
     {
-        m_Position += upDirection * speed;
+        m_Position += upDirection * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 
     if(m_Application->GetInputManager()->IsKeyDown(Magenta::KeyCode::E))
     {
-        m_Position -= upDirection * speed;
+        m_Position -= upDirection * speed * deltaTime;
         m_ShouldReCalculate = true;
     }
 }

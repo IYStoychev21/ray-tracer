@@ -35,8 +35,8 @@ public:
         if (m_InputManager->IsKeyDown(Magenta::KeyCode::Escape))
             m_Application->CloseWindow();
 
+        m_Camera->CameraUpdate(m_Application->GetDeltaTime());
         m_Renderer->Render(); 
-        m_Camera->CameraUpdate();
     }
 
     void OnUIRender() override 

@@ -115,7 +115,7 @@ void Renderer::RenderUI()
     ImGui::Spacing();
 
     ImGui::Text("Camera Speed");
-    ImGui::SliderFloat("Speed", &m_Camera->speed, 0.0f, 10.0f);
+    ImGui::SliderFloat("Speed", &m_Camera->speed, 0.2f, 10.0f);
 
     ImGui::Separator();
     ImGui::Spacing();
