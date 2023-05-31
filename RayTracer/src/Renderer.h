@@ -18,11 +18,8 @@ namespace utils
 class Renderer
 {
 public:
-    Renderer(Magenta::Application* app, std::shared_ptr<Camera> cam) : m_Application(app) 
-    { 
-        m_Resolution = glm::vec2(m_Application->GetWidth(), m_Application->GetHeight());
-        m_Camera = cam;
-    }
+    Renderer(Magenta::Application* app, std::shared_ptr<Camera> cam);
+    
 
     ~Renderer() = default;
 
@@ -31,7 +28,7 @@ public:
 
 private:
     bool HasResized();
-    glm::vec4 RenderPixel(glm::vec2 coord, Ray& ray);
+    glm::vec4 RenderPixel(Ray& ray);
 
 private:
     std::shared_ptr<Magenta::Image> m_Image;
@@ -39,7 +36,6 @@ private:
     Magenta::Application* m_Application;
     std::vector<uint32_t> pixels;
 
-    glm::vec2 m_Resolution;
 
     ImVec4 m_ImGuiColor = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
 

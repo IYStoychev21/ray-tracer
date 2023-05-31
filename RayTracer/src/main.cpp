@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include <glm/glm.hpp>
+#include <iostream>
 
 #include "Renderer.h"
 #include "Camera.h"
@@ -25,6 +26,7 @@ public:
     {
         m_Camera = std::shared_ptr<Camera>(new Camera(45.0f, 0.1f, 100.0f, m_Application));
         m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application, m_Camera));
+        m_Camera->Resize();
         m_InputManager = m_Application->GetInputManager();
     }
 

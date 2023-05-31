@@ -1,12 +1,21 @@
 #include "Renderer.h"
 #include <iostream>
 
+
+glm::vec2 resolution;
+
+Renderer::Renderer(Magenta::Application* app, std::shared_ptr<Camera> cam) : m_Application(app) 
+{ 
+    resolution = glm::vec2(m_Application->GetWidth(), m_Application->GetHeight());
+    m_Camera = cam;
+}
+
 void Renderer::Render()
 {
     Ray ray;
     ray.Origin = m_Camera->GetPosition();
 
-    if(m_PrevPos.x != ray.Origin.x || m_PrevPos.y != ray.Origin.y || m_PrevPos.z != ray.Origin.z)
+    if(m_PrevPos.x != ray.Origin.x || m_PrevPos.y != ray.Origin.y || m_PrevPos.z != ray.Origin.z || m_Application->GetInputManager()->IsMouseButtonDown(Magenta::MouseButton::Right))
     {
         m_ShouldReRender = true;
         m_PrevPos = ray.Origin;
@@ -17,16 +26,16 @@ void Renderer::Render()
 
     pixels.clear();
     pixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
-
+    
+    m_Camera->Resize();
 
     for(uint32_t y = 0; y < m_Application->GetHeight(); y++)
     {
         for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
         {
-            glm::vec2 textCoord = { (float)x / (float)m_Application->GetWidth(), (float)y / (float)m_Application->GetHeight() };
-            textCoord = textCoord * 2.0f - 1.0f;
+            ray.Direction = m_Camera->GetRayDirections()[x + y * m_Application->GetWidth()];
 
-            glm::vec4 color = RenderPixel(textCoord, ray);
+            glm::vec4 color = RenderPixel(ray);
             color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
 
             pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
@@ -36,23 +45,17 @@ void Renderer::Render()
     m_Image = std::shared_ptr<Magenta::Image>(new Magenta::Image(pixels.data(), glm::vec2(m_Application->GetWidth(), m_Application->GetHeight()), GL_RGBA));
 }
 
-glm::vec4 Renderer::RenderPixel(glm::vec2 coord, Ray& ray)
+glm::vec4 Renderer::RenderPixel(Ray& ray)
 {
     // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
     // a = ray origin
     // b = ray direction
     // r = sphere radius
     // t = distance along ray
-
-    float aspectRation = m_Resolution.x / m_Resolution.y;
-    coord.x *= aspectRation;
-
-    glm::vec3 rayDirection = glm::vec3(coord.x, coord.y, -1.0f);
-
     float radius = 0.5f;
 
-    float a = glm::dot(rayDirection, rayDirection);
-    float b = 2.0f * glm::dot(rayDirection, ray.Origin);
+    float a = glm::dot(ray.Direction, ray.Direction);
+    float b = 2.0f * glm::dot(ray.Direction, ray.Origin);
     float c = glm::dot(ray.Origin, ray.Origin) - glm::pow(radius, 2.0f);
 
     float discriminant = glm::pow(b, 2.0f) - 4.0f * a * c;
@@ -63,7 +66,7 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord, Ray& ray)
     float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a);
     float t1 = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 
-    glm::vec3 hitPoint = ray.Origin + rayDirection * t1;
+    glm::vec3 hitPoint = ray.Origin + ray.Direction * t1;
 
     glm::vec3 normal = glm::normalize(hitPoint);
     glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
@@ -77,9 +80,9 @@ glm::vec4 Renderer::RenderPixel(glm::vec2 coord, Ray& ray)
 
 bool Renderer::HasResized()
 {
-    if(m_PrevSize.x != m_Resolution.x || m_PrevSize.y != m_Resolution.y || m_ShouldReRender)
+    if(m_PrevSize.x != resolution.x || m_PrevSize.y != resolution.y || m_ShouldReRender)
     {
-        m_PrevSize = glm::vec2(m_Resolution.x, m_Resolution.y);
+        m_PrevSize = glm::vec2(resolution.x, resolution.y);
         m_ShouldReRender = false;
         return true;
     }
@@ -94,7 +97,7 @@ void Renderer::RenderUI()
 
     ImGui::Begin("Viewport");
 
-    m_Resolution = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
+    resolution = {ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y};
 
     ImGui::Image((void*)m_Image->GetTextureID(), ImGui::GetContentRegionAvail(), ImVec2(0, 1), ImVec2(1, 0));
 
