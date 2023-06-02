@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 
-#include "Camera.h"
+#include "Scene.h"
 #include "Ray.h"
 
 namespace utils
@@ -18,7 +18,7 @@ namespace utils
 class Renderer
 {
 public:
-    Renderer(Magenta::Application* app, std::shared_ptr<Camera> cam);
+    Renderer(Magenta::Application* app, std::shared_ptr<Scene> scene);
     
 
     ~Renderer() = default;
@@ -30,17 +30,19 @@ private:
     bool HasResized();
     glm::vec4 RenderPixel(Ray& ray);
 
+    void RenderViewportPanel();
+    void RenderSettingsPanel();
+    void RenderScenePanel();
+
 private:
     std::shared_ptr<Magenta::Image> m_Image;
     glm::vec2 m_PrevSize = glm::vec2(0.0f);
     Magenta::Application* m_Application;
     std::vector<uint32_t> pixels;
 
-
-    ImVec4 m_ImGuiColor = ImVec4(1.0f, 0.0f, 1.0f, 1.0f);
-
     bool m_ShouldReRender = false;
 
-    std::shared_ptr<Camera> m_Camera;
     glm::vec3 m_PrevPos = glm::vec3(0.0f);
+
+    std::shared_ptr<Scene> m_Scene;
 };

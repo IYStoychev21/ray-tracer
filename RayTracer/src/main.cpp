@@ -8,7 +8,7 @@
 #include <iostream>
 
 #include "Renderer.h"
-#include "Camera.h"
+#include "Scene.h"
 
 class RayTracer : public Magenta::Application
 {
@@ -24,9 +24,11 @@ public:
 
     void OnAttach() override 
     {
-        m_Camera = std::shared_ptr<Camera>(new Camera(45.0f, 0.1f, 100.0f, m_Application));
-        m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application, m_Camera));
-        m_Camera->Resize();
+        m_Scene = std::shared_ptr<Scene>(new Scene());
+        m_Scene->Spheres.push_back(Sphere{{0.0f, 0.0f, 0.0f}, 0.5f, {1.0f, 0.0f, 1.0f}});
+        m_Scene->Spheres.push_back(Sphere{{0.2f, 0.2f, -2.0f}, 1.0f, {0.3f, 0.2f, 0.8f}});
+        
+        m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application, m_Scene));
         m_InputManager = m_Application->GetInputManager();
     }
 
@@ -37,7 +39,6 @@ public:
         if (m_InputManager->IsKeyDown(Magenta::KeyCode::Escape))
             m_Application->CloseWindow();
 
-        m_Camera->CameraUpdate(m_Application->GetDeltaTime());
         m_Renderer->Render(); 
     }
 
@@ -48,7 +49,7 @@ public:
 private:
     std::shared_ptr<Renderer> m_Renderer;
     std::shared_ptr<Magenta::InputManager> m_InputManager;
-    std::shared_ptr<Camera> m_Camera;
+    std::shared_ptr<Scene> m_Scene;
 };
 
 Magenta::Application* Magenta::CreateApplication()
