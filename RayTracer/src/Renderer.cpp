@@ -11,15 +11,6 @@ Renderer::Renderer(Magenta::Application* app, std::shared_ptr<Scene> scene) : m_
 
 void Renderer::Render()
 {
-    Ray ray;
-    ray.Origin = {0.0f, 0.0f, 3.0f};
-
-    if(m_PrevPos.x != ray.Origin.x || m_PrevPos.y != ray.Origin.y || m_PrevPos.z != ray.Origin.z || m_Application->GetInputManager()->IsMouseButtonDown(Magenta::MouseButton::Right))
-    {
-        m_ShouldReRender = true;
-        m_PrevPos = ray.Origin;
-    }
-
     if(!HasResized())
         return;
 
@@ -32,13 +23,8 @@ void Renderer::Render()
     {
         for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
         {
-            // ray.Direction = m_Camera->GetRayDirections()[x + y * m_Application->GetWidth()];
-            ray.Direction = glm::vec3(x / resolution.x, y / resolution.y, -1.0f);
-            ray.Direction = ray.Direction * 2.0f - 1.0f;
-
-            glm::vec4 color = RenderPixel(ray);
+            glm::vec4 color = RayGen(x, y);
             color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-
             pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
         }
     } 
@@ -46,19 +32,37 @@ void Renderer::Render()
     m_Image = std::shared_ptr<Magenta::Image>(new Magenta::Image(pixels.data(), glm::vec2(m_Application->GetWidth(), m_Application->GetHeight()), GL_RGBA));
 }
 
-glm::vec4 Renderer::RenderPixel(Ray& ray)
+glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
+{
+    Ray ray;
+    ray.Origin = glm::vec3(0.0f, 0.0f, 3.0f);
+    ray.Direction = glm::vec3(x / resolution.x, y / resolution.y, -1.0f);
+    ray.Direction = ray.Direction * 2.0f - 1.0f;
+
+    RayData data = TraceRay(ray);
+
+    if(data.HitDistance < 0.0f)
+        return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+    float d = glm::dot(data.HitNormal, -lightDirection);
+
+    Sphere& sphere = m_Scene->Spheres[data.HitObjectIndex];
+    glm::vec4 sphereColor = {sphere.Albedo, 1.0f};
+    sphereColor *= d;
+    return sphereColor;
+}
+
+Renderer::RayData Renderer::TraceRay(Ray& ray)
 {
     // (bx^2 + by^2)t^2 + (2(axbx + ayby))t + (ax^2 + ay^2 - r^2) = 0
     // a = ray origin
     // b = ray direction
     // r = sphere radius
     // t = distance along ray
-
-    if (m_Scene->Spheres.size() == 0)
-        return {0.0f, 0.0f, 0.0f, 1.0f}; 
-
+    Renderer::RayData rayData;
     
-    Sphere* closestShepere = nullptr;
+    int32_t closestIndex = -1;
     float closestDistance = FLT_MAX;
     
     for(size_t i = 0; i < m_Scene->Spheres.size(); i++)
@@ -77,27 +81,40 @@ glm::vec4 Renderer::RenderPixel(Ray& ray)
         // float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a);
         float t1 = (-b - glm::sqrt(discriminant)) / (2.0f * a);
 
-        if(t1 < closestDistance)
+        if(t1 < closestDistance && t1 > 0.0f)
         {
-            closestShepere = &m_Scene->Spheres[i];
+            closestIndex = i;
             closestDistance = t1;
         }
     }
 
-    if(closestShepere == nullptr)
-        return {0.0f, 0.0f, 0.0f, 1.0f};
+    if(closestIndex < 0)
+        return MissObject(ray);
 
+    return HitObject(closestIndex, ray, closestDistance);
+}
 
-    glm::vec3 origin = ray.Origin - closestShepere->Position;
+Renderer::RayData Renderer::MissObject(Ray& ray)
+{
+    Renderer::RayData rayData;
+    rayData.HitDistance = -1.0f;
+    return rayData;
+}
 
-    glm::vec3 hitPoint = origin + ray.Direction * closestDistance;
+Renderer::RayData Renderer::HitObject(int32_t closestIndex, Ray& ray, float distance)
+{
+    Renderer::RayData rayData;
+    rayData.HitObjectIndex = closestIndex;
+    rayData.HitDistance = distance;
 
-    glm::vec3 normal = glm::normalize(hitPoint);
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+    Sphere& sphere = m_Scene->Spheres[closestIndex];
 
-    float d = glm::dot(normal, -lightDirection);
+    glm::vec3 origin = ray.Origin - sphere.Position;
+    rayData.HitPosition = origin + ray.Direction * distance;
+    rayData.HitNormal = glm::normalize(rayData.HitPosition);
+    rayData.HitPosition += sphere.Position;
 
-    return {closestShepere->Albedo * d, 1.0f};
+    return rayData;
 }
 
 bool Renderer::HasResized()

@@ -27,8 +27,21 @@ public:
     void RenderUI();
 
 private:
+    struct RayData
+    {
+        float HitDistance;
+        glm::vec3 HitPosition;
+        glm::vec3 HitNormal;
+
+        int32_t HitObjectIndex;
+    };
+
+    glm::vec4 RayGen(uint32_t x, uint32_t y);
+    RayData TraceRay(Ray& ray);
+    RayData MissObject(Ray& ray);
+    RayData HitObject(int32_t index, Ray& ray, float distance);
+
     bool HasResized();
-    glm::vec4 RenderPixel(Ray& ray);
 
     void RenderViewportPanel();
     void RenderSettingsPanel();
