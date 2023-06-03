@@ -39,18 +39,36 @@ glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
     ray.Direction = glm::vec3(x / resolution.x, y / resolution.y, -1.0f);
     ray.Direction = ray.Direction * 2.0f - 1.0f;
 
-    RayData data = TraceRay(ray);
+    float multiplyer = 1.0f;
+    int bounceCount = 2;
+    glm::vec4 color = glm::vec4(0.0f);
 
-    if(data.HitDistance < 0.0f)
-        return glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    for(int i = 0; i < bounceCount; i++)
+    {
+        RayData data = TraceRay(ray);
 
-    glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
-    float d = glm::dot(data.HitNormal, -lightDirection);
+        if(data.HitDistance < 0.0f)
+        {
+            glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
+            color += glm::vec4(skyColor, 1.0f) * multiplyer;
+            break;
+        }
 
-    Sphere& sphere = m_Scene->Spheres[data.HitObjectIndex];
-    glm::vec4 sphereColor = {sphere.Albedo, 1.0f};
-    sphereColor *= d;
-    return sphereColor;
+        glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
+        float d = glm::dot(data.HitNormal, -lightDirection);
+
+        Sphere& sphere = m_Scene->Spheres[data.HitObjectIndex];
+        glm::vec4 sphereColor = {sphere.Albedo, 1.0f};
+        sphereColor *= d;
+
+        color += sphereColor * multiplyer;
+        multiplyer *= 0.7f;
+
+        ray.Origin = data.HitPosition + data.HitNormal * 0.001f;
+        ray.Direction = glm::reflect(ray.Direction, data.HitNormal);
+    }
+
+    return color;
 }
 
 Renderer::RayData Renderer::TraceRay(Ray& ray)
@@ -64,6 +82,7 @@ Renderer::RayData Renderer::TraceRay(Ray& ray)
     
     int32_t closestIndex = -1;
     float closestDistance = FLT_MAX;
+
     
     for(size_t i = 0; i < m_Scene->Spheres.size(); i++)
     {

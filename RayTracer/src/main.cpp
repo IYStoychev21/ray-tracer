@@ -26,7 +26,7 @@ public:
     {
         m_Scene = std::shared_ptr<Scene>(new Scene());
         m_Scene->Spheres.push_back(Sphere{{0.0f, 0.0f, 0.0f}, 0.5f, {1.0f, 0.0f, 1.0f}});
-        m_Scene->Spheres.push_back(Sphere{{0.2f, 0.2f, -2.0f}, 1.0f, {0.3f, 0.2f, 0.8f}});
+        m_Scene->Spheres.push_back(Sphere{{1.3f, -0.7f, -1.5f}, 1.0f, {0.3f, 0.2f, 0.8f}});
         
         m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application, m_Scene));
         m_InputManager = m_Application->GetInputManager();
