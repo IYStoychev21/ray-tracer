@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <imgui.h>
+#include <execution>
 
 #include "Scene.h"
 #include "Ray.h"
@@ -63,4 +64,7 @@ private:
     std::vector<glm::vec4> m_AccumuletedPixels;
     int m_FrameIndex = 1;
     bool m_ShouldAccumulate = true;
+
+    std::vector<uint32_t> m_Horizontal;
+    std::vector<uint32_t> m_Vertical;
 };

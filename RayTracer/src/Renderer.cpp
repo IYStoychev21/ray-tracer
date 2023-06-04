@@ -21,26 +21,35 @@ void Renderer::Render()
         m_AccumuletedPixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
 
         m_FrameIndex = 1;
+
+        m_Horizontal.reserve(m_Application->GetWidth());
+        m_Vertical.reserve(m_Application->GetHeight());
+
+        for(int i = 0; i < m_Application->GetWidth(); i++)
+            m_Horizontal.push_back(i);
+
+        for(int i = 0; i < m_Application->GetHeight(); i++)
+            m_Vertical.push_back(i);
     }
     
     // m_Camera->Resize();
 
-    for(uint32_t y = 0; y < m_Application->GetHeight(); y++)
+    std::for_each(std::execution::par, m_Horizontal.begin(), m_Horizontal.end(), [this](int x)
     {
-        for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
-        {
-            if(m_FrameIndex == 1)
-                m_AccumuletedPixels[x + y * m_Application->GetWidth()] = glm::vec4(0.0f);
+       std::for_each(std::execution::par, m_Vertical.begin(), m_Vertical.end(), [this, x](int y)
+       {
+           if(m_FrameIndex == 1)
+               m_AccumuletedPixels[x + y * m_Application->GetWidth()] = glm::vec4(0.0f);
 
-            glm::vec4 color = RayGen(x, y);
+           glm::vec4 color = RayGen(x, y);
 
-            m_AccumuletedPixels[x + y * m_Application->GetWidth()] += color;
-            glm::vec4 accumulatedColor = m_AccumuletedPixels[x + y * m_Application->GetWidth()] / (float)m_FrameIndex;
+           m_AccumuletedPixels[x + y * m_Application->GetWidth()] += color;
+           glm::vec4 accumulatedColor = m_AccumuletedPixels[x + y * m_Application->GetWidth()] / (float)m_FrameIndex;
 
-            accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
-            pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(accumulatedColor); 
-        }
-    } 
+           accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+           pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(accumulatedColor); 
+       });
+    });
 
     if (m_ShouldAccumulate)
         m_FrameIndex++;
