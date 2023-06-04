@@ -11,11 +11,17 @@ Renderer::Renderer(Magenta::Application* app, std::shared_ptr<Scene> scene) : m_
 
 void Renderer::Render()
 {
-    if(!HasResized())
-        return;
 
-    pixels.clear();
-    pixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
+    if(HasResized())
+    {
+        pixels.clear();
+        pixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
+
+        m_AccumuletedPixels.clear();
+        m_AccumuletedPixels.resize(m_Application->GetWidth() * m_Application->GetHeight());
+
+        m_FrameIndex = 1;
+    }
     
     // m_Camera->Resize();
 
@@ -23,11 +29,23 @@ void Renderer::Render()
     {
         for(uint32_t x = 0; x < m_Application->GetWidth(); x++)
         {
+            if(m_FrameIndex == 1)
+                m_AccumuletedPixels[x + y * m_Application->GetWidth()] = glm::vec4(0.0f);
+
             glm::vec4 color = RayGen(x, y);
-            color = glm::clamp(color, glm::vec4(0.0f), glm::vec4(1.0f));
-            pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(color); 
+
+            m_AccumuletedPixels[x + y * m_Application->GetWidth()] += color;
+            glm::vec4 accumulatedColor = m_AccumuletedPixels[x + y * m_Application->GetWidth()] / (float)m_FrameIndex;
+
+            accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0.0f), glm::vec4(1.0f));
+            pixels[x + y * m_Application->GetWidth()] = utils::Vec4ToHex(accumulatedColor); 
         }
     } 
+
+    if (m_ShouldAccumulate)
+        m_FrameIndex++;
+    else
+        m_FrameIndex = 1;
 
     m_Image = std::shared_ptr<Magenta::Image>(new Magenta::Image(pixels.data(), glm::vec2(m_Application->GetWidth(), m_Application->GetHeight()), GL_RGBA));
 }
@@ -41,7 +59,7 @@ glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
     ray.Direction = ray.Direction * 2.0f - 1.0f;
 
     float multiplyer = 1.0f;
-    int bounceCount = 10;
+    int bounceCount = 5;
     glm::vec4 color = glm::vec4(0.0f);
 
     for(int i = 0; i < bounceCount; i++)
@@ -67,7 +85,7 @@ glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
         color += sphereColor * multiplyer;
         multiplyer *= 0.5f;
 
-        ray.Origin = data.HitPosition + data.HitNormal * 0.001f;
+        ray.Origin = data.HitPosition + data.HitNormal * 0.0001f;
         ray.Direction = glm::reflect(ray.Direction, data.HitNormal + materail.Roughness * glm::linearRand(-0.5f, 0.5f));
     }
 
@@ -246,6 +264,13 @@ void Renderer::RenderSettingsPanel()
 
     // ImGui::Text("Camera Speed");
     // ImGui::SliderFloat("Speed", &m_Camera->speed, 0.2f, 10.0f);
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Checkbox("Acummulation", &m_ShouldAccumulate);
+    if(ImGui::Button("Reset FrameIndex"))
+        m_FrameIndex = 1;
 
     ImGui::Separator();
     ImGui::Spacing();

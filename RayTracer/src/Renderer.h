@@ -26,6 +26,8 @@ public:
     void Render();
     void RenderUI();
 
+    int GetFrameIndex() { return m_FrameIndex; }
+    void ResetFrameIndex() { m_FrameIndex = 1; }
 private:
     struct RayData
     {
@@ -58,4 +60,7 @@ private:
     glm::vec3 m_PrevPos = glm::vec3(0.0f);
 
     std::shared_ptr<Scene> m_Scene;
+    std::vector<glm::vec4> m_AccumuletedPixels;
+    int m_FrameIndex = 1;
+    bool m_ShouldAccumulate = true;
 };
