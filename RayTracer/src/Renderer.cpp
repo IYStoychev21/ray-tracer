@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include <iostream>
-
+#include <glm/gtc/random.hpp>
 
 glm::vec2 resolution;
 
@@ -34,13 +34,14 @@ void Renderer::Render()
 
 glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
 {
+    x *= resolution.x / resolution.y;
     Ray ray;
     ray.Origin = glm::vec3(0.0f, 0.0f, 3.0f);
     ray.Direction = glm::vec3(x / resolution.x, y / resolution.y, -1.0f);
     ray.Direction = ray.Direction * 2.0f - 1.0f;
 
     float multiplyer = 1.0f;
-    int bounceCount = 2;
+    int bounceCount = 10;
     glm::vec4 color = glm::vec4(0.0f);
 
     for(int i = 0; i < bounceCount; i++)
@@ -49,8 +50,8 @@ glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
 
         if(data.HitDistance < 0.0f)
         {
-            glm::vec3 skyColor = glm::vec3(0.0f, 0.0f, 0.0f);
-            color += glm::vec4(skyColor, 1.0f) * multiplyer;
+            glm::vec3 skyColor = glm::vec3(0.6f, 0.7f, 0.9f);
+            color += glm::vec4(skyColor * multiplyer, 1.0f);
             break;
         }
 
@@ -58,14 +59,16 @@ glm::vec4 Renderer::RayGen(uint32_t x, uint32_t y)
         float d = glm::dot(data.HitNormal, -lightDirection);
 
         Sphere& sphere = m_Scene->Spheres[data.HitObjectIndex];
-        glm::vec4 sphereColor = {sphere.Albedo, 1.0f};
+        Material materail = m_Scene->Materials[sphere.MaterialIndex];
+
+        glm::vec4 sphereColor = {materail.Albedo, 1.0f};
         sphereColor *= d;
 
         color += sphereColor * multiplyer;
-        multiplyer *= 0.7f;
+        multiplyer *= 0.5f;
 
         ray.Origin = data.HitPosition + data.HitNormal * 0.001f;
-        ray.Direction = glm::reflect(ray.Direction, data.HitNormal);
+        ray.Direction = glm::reflect(ray.Direction, data.HitNormal + materail.Roughness * glm::linearRand(-0.5f, 0.5f));
     }
 
     return color;
@@ -186,24 +189,46 @@ void Renderer::RenderScenePanel()
     ImGui::Begin("Scene");
     ImGui::Spacing();
 
+    ImGui::Text("Spheres");
     for(size_t i = 0; i < m_Scene->Spheres.size(); i++)
     {
-        glm::vec3 prevColor = m_Scene->Spheres[i].Albedo;
         float prevRadius = m_Scene->Spheres[i].Radius;
         glm::vec3 prevPos = m_Scene->Spheres[i].Position;
 
         ImGui::PushID(i);
 
-        ImGui::Text("Sphere %d", i + 1);
-        ImGui::ColorEdit3("Sphere Color", &m_Scene->Spheres[i].Albedo[0]);
+        ImGui::DragFloat("Sphere Radius", &m_Scene->Spheres[i].Radius, 0.05f);
         ImGui::Spacing();
-        ImGui::DragFloat("Sphere Radius", &m_Scene->Spheres[i].Radius, 0.1f);
-        ImGui::Spacing();
-        ImGui::DragFloat3("Sphere Position", &m_Scene->Spheres[i].Position[0], 0.1f);
+        ImGui::DragFloat3("Sphere Position", &m_Scene->Spheres[i].Position[0], 0.05f);
 
         ImGui::Separator();
 
-        if(prevColor != m_Scene->Spheres[i].Albedo || prevRadius != m_Scene->Spheres[i].Radius || prevPos != m_Scene->Spheres[i].Position)
+        if(prevRadius != m_Scene->Spheres[i].Radius || prevPos != m_Scene->Spheres[i].Position)
+            m_ShouldReRender = true;        
+
+        ImGui::PopID();
+    }
+
+    ImGui::Text("Materials");
+    for(size_t i = 0; i < m_Scene->Materials.size(); i++)
+    {
+        glm::vec3 prevColor = m_Scene->Materials[i].Albedo;
+        Material& material = m_Scene->Materials[i];
+        float prevMetallic = material.Metallic;
+        float prevRoughness = material.Roughness;
+
+        ImGui::PushID(i);
+
+        ImGui::Text("Materail %d", i + 1);
+        ImGui::ColorEdit3("Albedo", &material.Albedo[0]);
+        ImGui::Spacing();
+        ImGui::DragFloat("Roughness", &material.Roughness, 0.05f, 0.0f, 1.0f);
+        ImGui::Spacing();
+        ImGui::DragFloat("Metallic", &material.Metallic, 0.1f);
+
+        ImGui::Separator();
+
+        if(prevColor != material.Albedo || prevMetallic != material.Metallic || prevRoughness != material.Roughness)
             m_ShouldReRender = true;        
 
         ImGui::PopID();

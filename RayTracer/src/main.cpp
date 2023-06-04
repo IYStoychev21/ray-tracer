@@ -25,8 +25,12 @@ public:
     void OnAttach() override 
     {
         m_Scene = std::shared_ptr<Scene>(new Scene());
-        m_Scene->Spheres.push_back(Sphere{{0.0f, 0.0f, 0.0f}, 0.5f, {1.0f, 0.0f, 1.0f}});
-        m_Scene->Spheres.push_back(Sphere{{1.3f, -0.7f, -1.5f}, 1.0f, {0.3f, 0.2f, 0.8f}});
+
+        m_Scene->Materials.push_back(Material{{1.0f, 0.0f, 1.0f}, 0.0001f, 0.0f});
+        m_Scene->Materials.push_back(Material{{0.3f, 0.2f, 0.8f}, 0.1f, 0.0f});
+
+        m_Scene->Spheres.push_back(Sphere{{0.8f, 0.18f, 0.0f}, 0.5f, 0});
+        m_Scene->Spheres.push_back(Sphere{{1.2f, -10.3f, 0.0f}, 10.0f, 1});
         
         m_Renderer = std::shared_ptr<Renderer>(new Renderer(m_Application, m_Scene));
         m_InputManager = m_Application->GetInputManager();
